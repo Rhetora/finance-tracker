@@ -1,0 +1,1 @@
+Building a simple finance tracker that is functional for my personal use, and is a way to learn the wxWidgets GUI library, and generally test out C++ libraries.
