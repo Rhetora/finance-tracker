@@ -1,6 +1,7 @@
 #include "account.h"
 #include "wx/wx.h"
 #include "wx/grid.h"
+#include <locale.h>
 
 // Application class
 class MyApp : public wxApp
@@ -78,6 +79,7 @@ wxBEGIN_EVENT_TABLE(MyFrame, wxFrame)
 // Application initialization
 bool MyApp::OnInit()
 {
+    setlocale(LC_NUMERIC, "");
     if (!wxApp::OnInit())
         return false;
 
@@ -126,14 +128,14 @@ MyFrame::MyFrame(const wxString &title)
     // Create a box sizer for the left side with 8 boxes
     wxBoxSizer *leftSizer = new wxBoxSizer(wxVERTICAL);
 
-    summaryBoxes[0] = new wxStaticText(this, wxID_ANY, "Total Balance: " + wxString::Format("%.2f", summary.totalBalance));
-    summaryBoxes[1] = new wxStaticText(this, wxID_ANY, "Current Balance: " + wxString::Format("%.2f", summary.currentBalance));
-    summaryBoxes[2] = new wxStaticText(this, wxID_ANY, "Savings Balance: " + wxString::Format("%.2f", summary.savingsBalance));
-    summaryBoxes[3] = new wxStaticText(this, wxID_ANY, "Credit Balance: " + wxString::Format("%.2f", summary.creditBalance));
-    summaryBoxes[4] = new wxStaticText(this, wxID_ANY, "ISA Balance: " + wxString::Format("%.2f", summary.ISABalance));
-    summaryBoxes[5] = new wxStaticText(this, wxID_ANY, "GIA Balance: " + wxString::Format("%.2f", summary.GIABalance));
-    summaryBoxes[6] = new wxStaticText(this, wxID_ANY, "Crypto Balance: " + wxString::Format("%.2f", summary.CryptoBalance));
-    summaryBoxes[7] = new wxStaticText(this, wxID_ANY, "Total Interest: " + wxString::Format("%.2f", summary.totalInterest));
+    summaryBoxes[0] = new wxStaticText(this, wxID_ANY, "Total Balance: " + wxString::Format("%#'.2f", summary.totalBalance));
+    summaryBoxes[1] = new wxStaticText(this, wxID_ANY, "Current Balance: " + wxString::Format("%#'.2f", summary.currentBalance));
+    summaryBoxes[2] = new wxStaticText(this, wxID_ANY, "Savings Balance: " + wxString::Format("%#'.2f", summary.savingsBalance));
+    summaryBoxes[3] = new wxStaticText(this, wxID_ANY, "Credit Balance: " + wxString::Format("%#'.2f", summary.creditBalance));
+    summaryBoxes[4] = new wxStaticText(this, wxID_ANY, "ISA Balance: " + wxString::Format("%#'.2f", summary.ISABalance));
+    summaryBoxes[5] = new wxStaticText(this, wxID_ANY, "GIA Balance: " + wxString::Format("%#'.2f", summary.GIABalance));
+    summaryBoxes[6] = new wxStaticText(this, wxID_ANY, "Crypto Balance: " + wxString::Format("%#'.2f", summary.CryptoBalance));
+    summaryBoxes[7] = new wxStaticText(this, wxID_ANY, "Total Interest: " + wxString::Format("%#'.2f", summary.totalInterest));
     for (int i = 0; i < 8; ++i)
     {
         leftSizer->Add(summaryBoxes[i], 0, wxEXPAND | wxALL, 5);
@@ -183,7 +185,7 @@ void MyFrame::LoadAccounts()
         grid->AppendRows(1);
         grid->SetCellValue(newRow, 0, account.name);
         grid->SetCellValue(newRow, 1, account.bank);
-        grid->SetCellValue(newRow, 2, wxString::Format("%.2f", account.getBalance()));
+        grid->SetCellValue(newRow, 2, wxString::Format("%#'.2f", account.getBalance()));
         grid->SetCellValue(newRow, 3, wxString::Format("%.2f", account.getInterest()));
         grid->SetCellValue(newRow, 4, account.type);
     }
@@ -195,14 +197,14 @@ void MyFrame::LoadAccounts()
 void MyFrame::LoadSummary()
 {
     summary = FinanceSummary(accountList);
-    summaryBoxes[0]->SetLabel("Total Balance: " + wxString::Format("%.2f", summary.totalBalance));
-    summaryBoxes[1]->SetLabel("Current Balance: " + wxString::Format("%.2f", summary.currentBalance));
-    summaryBoxes[2]->SetLabel("Savings Balance: " + wxString::Format("%.2f", summary.savingsBalance));
-    summaryBoxes[3]->SetLabel("Credit Balance: " + wxString::Format("%.2f", summary.creditBalance));
-    summaryBoxes[4]->SetLabel("ISA Balance: " + wxString::Format("%.2f", summary.ISABalance));
-    summaryBoxes[5]->SetLabel("GIA Balance: " + wxString::Format("%.2f", summary.GIABalance));
-    summaryBoxes[6]->SetLabel("Crypto Balance: " + wxString::Format("%.2f", summary.CryptoBalance));
-    summaryBoxes[7]->SetLabel("Total Interest: " + wxString::Format("%.2f", summary.totalInterest));
+    summaryBoxes[0]->SetLabel("Total Balance: " + wxString::Format("%#'.2f", summary.totalBalance));
+    summaryBoxes[1]->SetLabel("Current Balance: " + wxString::Format("%#'.2f", summary.currentBalance));
+    summaryBoxes[2]->SetLabel("Savings Balance: " + wxString::Format("%#'.2f", summary.savingsBalance));
+    summaryBoxes[3]->SetLabel("Credit Balance: " + wxString::Format("%#'.2f", summary.creditBalance));
+    summaryBoxes[4]->SetLabel("ISA Balance: " + wxString::Format("%#'.2f", summary.ISABalance));
+    summaryBoxes[5]->SetLabel("GIA Balance: " + wxString::Format("%#'.2f", summary.GIABalance));
+    summaryBoxes[6]->SetLabel("Crypto Balance: " + wxString::Format("%#'.2f", summary.CryptoBalance));
+    summaryBoxes[7]->SetLabel("Total Interest: " + wxString::Format("%#'.2f", summary.totalInterest));
 }
 
 // Event handler for quitting the application
