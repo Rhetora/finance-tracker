@@ -14,7 +14,7 @@ class MyFrame : public wxFrame
 {
 public:
     std::vector<Account> accountList = {};
-    FinanceSummary summary = nullptr;
+    FinanceSummary summary = FinanceSummary(accountList);
 
     MyFrame(const wxString &title);
 
