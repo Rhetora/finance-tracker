@@ -1,3 +1,5 @@
+#pragma once
+
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -9,26 +11,26 @@
 class Account
 {
 private:
-    double balance;
-    double interest;
+    double balance_;
+    double interest_;
 
 public:
-    std::string name;
-    std::string bank;
-    std::string type;
+    std::string name_;
+    std::string bank_;
+    std::string type_;
 
     // Constructor to initialize an account
     Account(const std::string &n, const std::string &b, double bal, double i, const std::string &t)
-        : name(n), bank(b), balance(bal), interest(i), type(t)
+        : name_(n), bank_(b), balance_(bal), interest_(i), type_(t)
     {
     }
 
     // Getters and setters for balance and interest
-    double getBalance() const { return balance; }
-    void setBalance(double bal) { balance = bal; }
+    double balance() const { return balance_; }
+    void setBalance(double bal) { balance_ = bal; }
 
-    double getInterest() const { return interest; }
-    void setInterest(double i) { interest = i; }
+    double interest() const { return interest_; }
+    void setInterest(double i) { interest_ = i; }
 
     void AddAccountToCSV()
     {
@@ -39,7 +41,7 @@ public:
             return;
         }
 
-        file << name << "," << bank << "," << getBalance() << "," << getInterest() << "," << type << std::endl;
+        file << name_ << "," << bank_ << "," << balance() << "," << interest() << "," << type_ << std::endl;
         file.close();
     }
 };
@@ -47,54 +49,54 @@ public:
 class FinanceSummary
 {
 public:
-    double totalBalance;
-    double currentBalance;
-    double savingsBalance;
-    double creditBalance;
-    double ISABalance;
-    double GIABalance;
-    double CryptoBalance;
-    double totalInterest;
+    double totalBalance_;
+    double currentBalance_;
+    double savingsBalance_;
+    double creditBalance_;
+    double isaBalance_;
+    double giaBalance_;
+    double cryptoBalance_;
+    double totalInterest_;
 
     FinanceSummary(std::vector<Account> accountList)
     {
-        totalBalance = 0;
-        currentBalance = 0;
-        savingsBalance = 0;
-        creditBalance = 0;
-        ISABalance = 0;
-        GIABalance = 0;
-        CryptoBalance = 0;
-        totalInterest = 0;
+        totalBalance_ = 0;
+        currentBalance_ = 0;
+        savingsBalance_ = 0;
+        creditBalance_ = 0;
+        isaBalance_ = 0;
+        giaBalance_ = 0;
+        cryptoBalance_ = 0;
+        totalInterest_ = 0;
 
         for (const Account &account : accountList)
         {
-            totalBalance += account.getBalance();
-            totalInterest += account.getInterest() * account.getBalance() * 0.01;
+            totalBalance_ += account.balance();
+            totalInterest_ += account.interest() * account.balance() * 0.01;
 
-            if (account.type == "Current")
+            if (account.type_ == "Current")
             {
-                currentBalance += account.getBalance();
+                currentBalance_ += account.balance();
             }
-            else if (account.type == "Savings")
+            else if (account.type_ == "Savings")
             {
-                savingsBalance += account.getBalance();
+                savingsBalance_ += account.balance();
             }
-            else if (account.type == "Credit")
+            else if (account.type_ == "Credit")
             {
-                creditBalance += account.getBalance();
+                creditBalance_ += account.balance();
             }
-            else if (account.type == "ISA")
+            else if (account.type_ == "ISA")
             {
-                ISABalance += account.getBalance();
+                isaBalance_ += account.balance();
             }
-            else if (account.type == "GIA")
+            else if (account.type_ == "GIA")
             {
-                GIABalance += account.getBalance();
+                giaBalance_ += account.balance();
             }
-            else if (account.type == "Crypto")
+            else if (account.type_ == "Crypto")
             {
-                CryptoBalance += account.getBalance();
+                cryptoBalance_ += account.balance();
             }
         }
     }
@@ -120,7 +122,7 @@ public:
         tm *gmtm = gmtime(&now);
         dt = asctime(gmtm);
 
-        file << dt << "," << totalBalance << "," << currentBalance << "," << savingsBalance << "," << creditBalance << "," << ISABalance << "," << GIABalance << "," << CryptoBalance << "," << totalInterest << "," << std::endl;
+        file << dt << "," << totalBalance_ << "," << currentBalance_ << "," << savingsBalance_ << "," << creditBalance_ << "," << isaBalance_ << "," << giaBalance_ << "," << cryptoBalance_ << "," << totalInterest_ << "," << std::endl;
         file.close();
     }
 };

@@ -11,13 +11,13 @@ public:
 };
 
 // Frame class for the main application window
-class MyFrame : public wxFrame
+class InfoFrame : public wxFrame
 {
 public:
     std::vector<Account> accountList = {};
     FinanceSummary summary = FinanceSummary(accountList);
 
-    MyFrame(const wxString &title);
+    InfoFrame(const wxString &title);
 
     void OnQuit(wxCommandEvent &event);
     void OnAbout(wxCommandEvent &event);
@@ -63,11 +63,11 @@ enum
     Save_Summary = 3
 };
 
-wxBEGIN_EVENT_TABLE(MyFrame, wxFrame)
-    EVT_MENU(Minimal_Quit, MyFrame::OnQuit)
-        EVT_MENU(Minimal_About, MyFrame::OnAbout)
-            EVT_MENU(Add_Account, MyFrame::OnAddAccount)
-                EVT_BUTTON(Save_Summary, MyFrame::OnSaveSummary)
+wxBEGIN_EVENT_TABLE(InfoFrame, wxFrame)
+    EVT_MENU(Minimal_Quit, InfoFrame::OnQuit)
+        EVT_MENU(Minimal_About, InfoFrame::OnAbout)
+            EVT_MENU(Add_Account, InfoFrame::OnAddAccount)
+                EVT_BUTTON(Save_Summary, InfoFrame::OnSaveSummary)
                     wxEND_EVENT_TABLE()
 
                         wxBEGIN_EVENT_TABLE(AccountAddFrame, wxFrame)
@@ -83,14 +83,14 @@ bool MyApp::OnInit()
     if (!wxApp::OnInit())
         return false;
 
-    MyFrame *frame = new MyFrame("Personal Finance Tracker");
+    InfoFrame *frame = new InfoFrame("Personal Finance Tracker");
     frame->Show(true);
 
     return true;
 }
 
 // Frame constructor
-MyFrame::MyFrame(const wxString &title)
+InfoFrame::InfoFrame(const wxString &title)
     : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(800, 600)) // Set the size here
 {
 #if wxUSE_MENUBAR
@@ -109,7 +109,7 @@ MyFrame::MyFrame(const wxString &title)
 #else
     wxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
     wxButton *aboutBtn = new wxButton(this, wxID_ANY, "About...");
-    aboutBtn->Bind(wxEVT_BUTTON, &MyFrame::OnAbout, this);
+    aboutBtn->Bind(wxEVT_BUTTON, &InfoFrame::OnAbout, this);
     sizer->Add(aboutBtn, wxSizerFlags().Center());
     SetSizer(sizer);
 #endif
@@ -128,14 +128,14 @@ MyFrame::MyFrame(const wxString &title)
     // Create a box sizer for the left side with 8 boxes
     wxBoxSizer *leftSizer = new wxBoxSizer(wxVERTICAL);
 
-    summaryBoxes[0] = new wxStaticText(this, wxID_ANY, "Total Balance: " + wxString::Format("%#'.2f", summary.totalBalance));
-    summaryBoxes[1] = new wxStaticText(this, wxID_ANY, "Current Balance: " + wxString::Format("%#'.2f", summary.currentBalance));
-    summaryBoxes[2] = new wxStaticText(this, wxID_ANY, "Savings Balance: " + wxString::Format("%#'.2f", summary.savingsBalance));
-    summaryBoxes[3] = new wxStaticText(this, wxID_ANY, "Credit Balance: " + wxString::Format("%#'.2f", summary.creditBalance));
-    summaryBoxes[4] = new wxStaticText(this, wxID_ANY, "ISA Balance: " + wxString::Format("%#'.2f", summary.ISABalance));
-    summaryBoxes[5] = new wxStaticText(this, wxID_ANY, "GIA Balance: " + wxString::Format("%#'.2f", summary.GIABalance));
-    summaryBoxes[6] = new wxStaticText(this, wxID_ANY, "Crypto Balance: " + wxString::Format("%#'.2f", summary.CryptoBalance));
-    summaryBoxes[7] = new wxStaticText(this, wxID_ANY, "Total Interest: " + wxString::Format("%#'.2f", summary.totalInterest));
+    summaryBoxes[0] = new wxStaticText(this, wxID_ANY, "Total Balance: " + wxString::Format("%#'.2f", summary.totalBalance_));
+    summaryBoxes[1] = new wxStaticText(this, wxID_ANY, "Current Balance: " + wxString::Format("%#'.2f", summary.currentBalance_));
+    summaryBoxes[2] = new wxStaticText(this, wxID_ANY, "Savings Balance: " + wxString::Format("%#'.2f", summary.savingsBalance_));
+    summaryBoxes[3] = new wxStaticText(this, wxID_ANY, "Credit Balance: " + wxString::Format("%#'.2f", summary.creditBalance_));
+    summaryBoxes[4] = new wxStaticText(this, wxID_ANY, "ISA Balance: " + wxString::Format("%#'.2f", summary.isaBalance_));
+    summaryBoxes[5] = new wxStaticText(this, wxID_ANY, "GIA Balance: " + wxString::Format("%#'.2f", summary.giaBalance_));
+    summaryBoxes[6] = new wxStaticText(this, wxID_ANY, "Crypto Balance: " + wxString::Format("%#'.2f", summary.cryptoBalance_));
+    summaryBoxes[7] = new wxStaticText(this, wxID_ANY, "Total Interest: " + wxString::Format("%#'.2f", summary.totalInterest_));
     for (int i = 0; i < 8; ++i)
     {
         leftSizer->Add(summaryBoxes[i], 0, wxEXPAND | wxALL, 5);
@@ -163,7 +163,7 @@ MyFrame::MyFrame(const wxString &title)
 }
 
 // Initialize the grid with columns for account details
-void MyFrame::InitializeGrid()
+void InfoFrame::InitializeGrid()
 {
     grid->CreateGrid(0, 5); // Initially 0 rows, 5 columns
     grid->SetColLabelValue(0, "Name");
@@ -175,7 +175,7 @@ void MyFrame::InitializeGrid()
 }
 
 // Load existing accounts into the grid
-void MyFrame::LoadAccounts()
+void InfoFrame::LoadAccounts()
 {
     if (grid->GetNumberRows() > 0)
         grid->DeleteRows(0, grid->GetNumberRows());
@@ -183,38 +183,38 @@ void MyFrame::LoadAccounts()
     {
         int newRow = grid->GetNumberRows();
         grid->AppendRows(1);
-        grid->SetCellValue(newRow, 0, account.name);
-        grid->SetCellValue(newRow, 1, account.bank);
-        grid->SetCellValue(newRow, 2, wxString::Format("%#'.2f", account.getBalance()));
-        grid->SetCellValue(newRow, 3, wxString::Format("%.2f", account.getInterest()));
-        grid->SetCellValue(newRow, 4, account.type);
+        grid->SetCellValue(newRow, 0, account.name_);
+        grid->SetCellValue(newRow, 1, account.bank_);
+        grid->SetCellValue(newRow, 2, wxString::Format("%#'.2f", account.balance()));
+        grid->SetCellValue(newRow, 3, wxString::Format("%.2f", account.interest()));
+        grid->SetCellValue(newRow, 4, account.type_);
     }
     grid->AutoSizeColumns(); // Automatically size columns to fit content
     grid->Refresh();
 }
 
 // Function to load and update the summary values
-void MyFrame::LoadSummary()
+void InfoFrame::LoadSummary()
 {
     summary = FinanceSummary(accountList);
-    summaryBoxes[0]->SetLabel("Total Balance: " + wxString::Format("%#'.2f", summary.totalBalance));
-    summaryBoxes[1]->SetLabel("Current Balance: " + wxString::Format("%#'.2f", summary.currentBalance));
-    summaryBoxes[2]->SetLabel("Savings Balance: " + wxString::Format("%#'.2f", summary.savingsBalance));
-    summaryBoxes[3]->SetLabel("Credit Balance: " + wxString::Format("%#'.2f", summary.creditBalance));
-    summaryBoxes[4]->SetLabel("ISA Balance: " + wxString::Format("%#'.2f", summary.ISABalance));
-    summaryBoxes[5]->SetLabel("GIA Balance: " + wxString::Format("%#'.2f", summary.GIABalance));
-    summaryBoxes[6]->SetLabel("Crypto Balance: " + wxString::Format("%#'.2f", summary.CryptoBalance));
-    summaryBoxes[7]->SetLabel("Total Interest: " + wxString::Format("%#'.2f", summary.totalInterest));
+    summaryBoxes[0]->SetLabel("Total Balance: " + wxString::Format("%#'.2f", summary.totalBalance_));
+    summaryBoxes[1]->SetLabel("Current Balance: " + wxString::Format("%#'.2f", summary.currentBalance_));
+    summaryBoxes[2]->SetLabel("Savings Balance: " + wxString::Format("%#'.2f", summary.savingsBalance_));
+    summaryBoxes[3]->SetLabel("Credit Balance: " + wxString::Format("%#'.2f", summary.creditBalance_));
+    summaryBoxes[4]->SetLabel("ISA Balance: " + wxString::Format("%#'.2f", summary.isaBalance_));
+    summaryBoxes[5]->SetLabel("GIA Balance: " + wxString::Format("%#'.2f", summary.giaBalance_));
+    summaryBoxes[6]->SetLabel("Crypto Balance: " + wxString::Format("%#'.2f", summary.cryptoBalance_));
+    summaryBoxes[7]->SetLabel("Total Interest: " + wxString::Format("%#'.2f", summary.totalInterest_));
 }
 
 // Event handler for quitting the application
-void MyFrame::OnQuit(wxCommandEvent &WXUNUSED(event))
+void InfoFrame::OnQuit(wxCommandEvent &WXUNUSED(event))
 {
     Close(true);
 }
 
 // Event handler for showing the "About" dialog
-void MyFrame::OnAbout(wxCommandEvent &WXUNUSED(event))
+void InfoFrame::OnAbout(wxCommandEvent &WXUNUSED(event))
 {
     wxMessageBox(wxString::Format(
                      "Welcome to the Personal Finance Tracker!\n"
@@ -228,11 +228,11 @@ void MyFrame::OnAbout(wxCommandEvent &WXUNUSED(event))
 }
 
 // Event handler for adding a new account
-void MyFrame::OnAddAccount(wxCommandEvent &WXUNUSED(event))
+void InfoFrame::OnAddAccount(wxCommandEvent &WXUNUSED(event))
 {
     (new AccountAddFrame(this))->Show();
 }
-void MyFrame::OnSaveSummary(wxCommandEvent &WXUNUSED(event))
+void InfoFrame::OnSaveSummary(wxCommandEvent &WXUNUSED(event))
 {
     summary.SaveFinanceSummary();
 }
@@ -285,7 +285,7 @@ void AccountAddFrame::OnSubmit(wxCommandEvent &WXUNUSED(event))
 
     Account newAccount(name.ToStdString(), bank.ToStdString(), balance, interest, type.ToStdString());
 
-    MyFrame *parentFrame = dynamic_cast<MyFrame *>(GetParent());
+    InfoFrame *parentFrame = dynamic_cast<InfoFrame *>(GetParent());
     if (parentFrame)
     {
         parentFrame->accountList.push_back(newAccount);
