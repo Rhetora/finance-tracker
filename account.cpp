@@ -1,9 +1,7 @@
 #include "account.h"
 #include "wx/wx.h"
 #include "wx/grid.h"
-#include <vector>
-#include <fstream>
-#include <sstream>
+
 
 // Application class
 class MyApp : public wxApp
@@ -24,8 +22,6 @@ public:
     void OnAbout(wxCommandEvent &event);
     void OnAddAccount(wxCommandEvent &event);
 
-    std::vector<Account> LoadAccountsFromCSV();
-    void AddAccountToCSV(Account account);
     void LoadAccounts();
 
 private:
@@ -86,7 +82,7 @@ bool MyApp::OnInit()
 
 // Frame constructor
 MyFrame::MyFrame(const wxString &title)
-    : wxFrame(NULL, wxID_ANY, title)
+    : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(800, 600)) // Set the size here
 {
 #if wxUSE_MENUBAR
     wxMenu *fileMenu = new wxMenu;
@@ -122,7 +118,7 @@ MyFrame::MyFrame(const wxString &title)
     // Set the sizer
     wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
     sizer->Add(grid, 1, wxEXPAND | wxALL, 5);
-    
+
     // Load accounts after the grid has been initialized
     LoadAccounts();
     SetSizerAndFit(sizer);
@@ -137,61 +133,14 @@ void MyFrame::InitializeGrid()
     grid->SetColLabelValue(2, "Balance");
     grid->SetColLabelValue(3, "Interest");
     grid->SetColLabelValue(4, "Type");
+    grid->AutoSizeColumns(); // Automatically size columns to fit content
 }
-std::vector<Account> MyFrame::LoadAccountsFromCSV()
+
+// Load existing accounts into the grid
+void MyFrame::LoadAccounts()
 {
-    std::vector<Account> accountList;
-    std::ifstream file("accounts.csv");
-    if(!file.good()) {
-        std::ofstream file("accounts.csv");
-        file.close();
-        return accountList;
-    }
-    
-    if (!file.is_open())
-    {
-        std::cerr << "Error opening file" << std::endl;
-        return accountList;
-    }
-
-    std::string line;
-    while (std::getline(file, line))
-    {
-        std::istringstream ss(line);
-        std::string name, bank, type;
-        double balance, interest;
-        if (std::getline(ss, name, ',') &&
-            std::getline(ss, bank, ',') &&
-            ss >> balance &&
-            ss.ignore() &&
-            ss >> interest &&
-            ss.ignore() &&
-            std::getline(ss, type))
-        {
-            accountList.push_back(Account(name, bank, balance, interest, type));
-        }
-    }
-
-    return accountList;
-
-}
-
-void MyFrame::AddAccountToCSV(Account account) {  
-    std::ofstream file("accounts.csv", std::ios::app);
-    if (!file.is_open())
-    {
-        std::cerr << "Error opening file" << std::endl;
-        return;
-    }
-
-    file << account.name << "," << account.bank << "," << account.getBalance() << "," << account.getInterest() << "," << account.type << std::endl;
-    file.close();
-}
-
-    // Load existing accounts into the grid
-    void MyFrame::LoadAccounts()
-{   
-    if(grid->GetNumberRows() > 0) grid->DeleteRows(0, grid->GetNumberRows());
+    if (grid->GetNumberRows() > 0)
+        grid->DeleteRows(0, grid->GetNumberRows());
     for (const Account &account : accountList)
     {
         int newRow = grid->GetNumberRows();
@@ -202,6 +151,7 @@ void MyFrame::AddAccountToCSV(Account account) {
         grid->SetCellValue(newRow, 3, wxString::Format("%.2f", account.getInterest()));
         grid->SetCellValue(newRow, 4, account.type);
     }
+    grid->AutoSizeColumns(); // Automatically size columns to fit content
     grid->Refresh();
 }
 
@@ -233,18 +183,18 @@ void MyFrame::OnAddAccount(wxCommandEvent &WXUNUSED(event))
 
 // Constructor for the AccountAddFrame
 AccountAddFrame::AccountAddFrame(wxWindow *parent)
-    : wxFrame(parent, wxID_ANY, "Add New Account", wxDefaultPosition, wxSize(300, 400))
+    : wxFrame(parent, wxID_ANY, "New Account", wxDefaultPosition, wxSize(400, 500)) // Adjusted size here
 {
     wxPanel *panel = new wxPanel(this, wxID_ANY);
 
     wxBoxSizer *vbox = new wxBoxSizer(wxVERTICAL);
 
     // Creating input fields for account details
-    nameCtrl = new wxTextCtrl(panel, wxID_ANY);
-    bankCtrl = new wxTextCtrl(panel, wxID_ANY);
-    balanceCtrl = new wxTextCtrl(panel, wxID_ANY);
-    interestCtrl = new wxTextCtrl(panel, wxID_ANY);
-    typeCtrl = new wxTextCtrl(panel, wxID_ANY);
+    nameCtrl = new wxTextCtrl(panel, wxID_ANY, "", wxDefaultPosition, wxSize(200, -1));
+    bankCtrl = new wxTextCtrl(panel, wxID_ANY, "", wxDefaultPosition, wxSize(200, -1));
+    balanceCtrl = new wxTextCtrl(panel, wxID_ANY, "", wxDefaultPosition, wxSize(200, -1));
+    interestCtrl = new wxTextCtrl(panel, wxID_ANY, "", wxDefaultPosition, wxSize(200, -1));
+    typeCtrl = new wxTextCtrl(panel, wxID_ANY, "", wxDefaultPosition, wxSize(200, -1));
 
     vbox->Add(new wxStaticText(panel, wxID_ANY, "Name"), 0, wxALL, 5);
     vbox->Add(nameCtrl, 0, wxALL | wxEXPAND, 5);
@@ -260,11 +210,10 @@ AccountAddFrame::AccountAddFrame(wxWindow *parent)
     // Submit button
     wxButton *submitBtn = new wxButton(panel, Submit_Account, "Submit");
     vbox->Add(submitBtn, 0, wxALL | wxALIGN_CENTER, 10);
-    
+
     panel->SetSizer(vbox);
     vbox->SetSizeHints(this);
     // Adjust the frame size to ensure all controls are visible
-
 }
 
 // Event handler for the submit button
@@ -284,7 +233,9 @@ void AccountAddFrame::OnSubmit(wxCommandEvent &WXUNUSED(event))
     if (parentFrame)
     {
         parentFrame->accountList.push_back(newAccount);
-        parentFrame->AddAccountToCSV(newAccount);
+        newAccount.AddAccountToCSV();
+        FinanceSummary summary(parentFrame->accountList);
+        summary.SaveFinanceSummary();
         parentFrame->LoadAccounts();
     }
 
