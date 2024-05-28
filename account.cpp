@@ -142,6 +142,12 @@ std::vector<Account> MyFrame::LoadAccountsFromCSV()
 {
     std::vector<Account> accountList;
     std::ifstream file("accounts.csv");
+    if(!file.good()) {
+        std::ofstream file("accounts.csv");
+        file.close();
+        return accountList;
+    }
+    
     if (!file.is_open())
     {
         std::cerr << "Error opening file" << std::endl;
