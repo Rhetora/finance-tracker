@@ -70,7 +70,7 @@ public:
         for (const Account &account : accountList)
         {
             totalBalance += account.getBalance();
-            totalInterest += account.getInterest() * account.getBalance();
+            totalInterest += account.getInterest() * account.getBalance() * 0.01;
 
             if (account.type == "Current")
             {
@@ -101,7 +101,7 @@ public:
 
     void SaveFinanceSummary()
     {
-        std::ofstream file("history.csv");
+        std::ofstream file("history.csv", std::ios::app);
         if (!file.good())
         {
             std::ofstream file("history.csv");

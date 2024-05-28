@@ -2,7 +2,6 @@
 #include "wx/wx.h"
 #include "wx/grid.h"
 
-
 // Application class
 class MyApp : public wxApp
 {
@@ -15,18 +14,24 @@ class MyFrame : public wxFrame
 {
 public:
     std::vector<Account> accountList = {};
+    FinanceSummary summary = nullptr;
 
     MyFrame(const wxString &title);
 
     void OnQuit(wxCommandEvent &event);
     void OnAbout(wxCommandEvent &event);
     void OnAddAccount(wxCommandEvent &event);
+    void OnSaveSummary(wxCommandEvent &event);
 
     void LoadAccounts();
+    void LoadSummary();
 
 private:
     wxGrid *grid;
     void InitializeGrid();
+
+    wxStaticText *summaryBoxes[8]; // Array to hold 8 value boxes
+    wxButton *actionButton;        // Button below the grid
 
     wxDECLARE_EVENT_TABLE();
 };
@@ -53,20 +58,22 @@ enum
     Minimal_Quit = wxID_EXIT,
     Minimal_About = wxID_ABOUT,
     Add_Account = 1,
-    Submit_Account = 2
+    Submit_Account = 2,
+    Save_Summary = 3
 };
 
 wxBEGIN_EVENT_TABLE(MyFrame, wxFrame)
     EVT_MENU(Minimal_Quit, MyFrame::OnQuit)
         EVT_MENU(Minimal_About, MyFrame::OnAbout)
             EVT_MENU(Add_Account, MyFrame::OnAddAccount)
-                wxEND_EVENT_TABLE()
+                EVT_BUTTON(Save_Summary, MyFrame::OnSaveSummary)
+                    wxEND_EVENT_TABLE()
 
-                    wxBEGIN_EVENT_TABLE(AccountAddFrame, wxFrame)
-                        EVT_BUTTON(Submit_Account, AccountAddFrame::OnSubmit)
-                            wxEND_EVENT_TABLE()
+                        wxBEGIN_EVENT_TABLE(AccountAddFrame, wxFrame)
+                            EVT_BUTTON(Submit_Account, AccountAddFrame::OnSubmit)
+                                wxEND_EVENT_TABLE()
 
-                                wxIMPLEMENT_APP(MyApp);
+                                    wxIMPLEMENT_APP(MyApp);
 
 // Application initialization
 bool MyApp::OnInit()
@@ -111,17 +118,46 @@ MyFrame::MyFrame(const wxString &title)
 #endif
 
     accountList = LoadAccountsFromCSV();
+    summary = FinanceSummary(accountList);
     // Create and initialize the grid
     grid = new wxGrid(this, wxID_ANY);
     InitializeGrid();
 
-    // Set the sizer
-    wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
-    sizer->Add(grid, 1, wxEXPAND | wxALL, 5);
+    // Create a box sizer for the left side with 8 boxes
+    wxBoxSizer *leftSizer = new wxBoxSizer(wxVERTICAL);
 
-    // Load accounts after the grid has been initialized
+    summaryBoxes[0] = new wxStaticText(this, wxID_ANY, "Total Balance: " + wxString::Format("%.2f", summary.totalBalance));
+    summaryBoxes[1] = new wxStaticText(this, wxID_ANY, "Current Balance: " + wxString::Format("%.2f", summary.currentBalance));
+    summaryBoxes[2] = new wxStaticText(this, wxID_ANY, "Savings Balance: " + wxString::Format("%.2f", summary.savingsBalance));
+    summaryBoxes[3] = new wxStaticText(this, wxID_ANY, "Credit Balance: " + wxString::Format("%.2f", summary.creditBalance));
+    summaryBoxes[4] = new wxStaticText(this, wxID_ANY, "ISA Balance: " + wxString::Format("%.2f", summary.ISABalance));
+    summaryBoxes[5] = new wxStaticText(this, wxID_ANY, "GIA Balance: " + wxString::Format("%.2f", summary.GIABalance));
+    summaryBoxes[6] = new wxStaticText(this, wxID_ANY, "Crypto Balance: " + wxString::Format("%.2f", summary.CryptoBalance));
+    summaryBoxes[7] = new wxStaticText(this, wxID_ANY, "Total Interest: " + wxString::Format("%.2f", summary.totalInterest));
+    for (int i = 0; i < 8; ++i)
+    {
+        leftSizer->Add(summaryBoxes[i], 0, wxEXPAND | wxALL, 5);
+    }
+
+    // Create a horizontal sizer to hold the left boxes and the grid
+    wxBoxSizer *mainSizer = new wxBoxSizer(wxHORIZONTAL);
+    mainSizer->Add(leftSizer, 0, wxEXPAND | wxALL, 5);
+    mainSizer->Add(grid, 1, wxEXPAND | wxALL, 5);
+
+    // Create the action button and add it below the grid
+    wxBoxSizer *bottomSizer = new wxBoxSizer(wxHORIZONTAL);
+    actionButton = new wxButton(this, Save_Summary, "Save Summary");
+    bottomSizer->Add(actionButton, 0, wxALIGN_LEFT | wxALL, 5);
+
+    // Create a vertical sizer to combine the main sizer and the bottom button
+    wxBoxSizer *verticalSizer = new wxBoxSizer(wxVERTICAL);
+    verticalSizer->Add(mainSizer, 1, wxEXPAND | wxALL, 5);
+    verticalSizer->Add(bottomSizer, 0, wxALIGN_LEFT | wxALL, 5);
+
+    // Set the sizer for the frame
+    SetSizerAndFit(verticalSizer);
     LoadAccounts();
-    SetSizerAndFit(sizer);
+    LoadSummary();
 }
 
 // Initialize the grid with columns for account details
@@ -155,6 +191,20 @@ void MyFrame::LoadAccounts()
     grid->Refresh();
 }
 
+// Function to load and update the summary values
+void MyFrame::LoadSummary()
+{
+    summary = FinanceSummary(accountList);
+    summaryBoxes[0]->SetLabel("Total Balance: " + wxString::Format("%.2f", summary.totalBalance));
+    summaryBoxes[1]->SetLabel("Current Balance: " + wxString::Format("%.2f", summary.currentBalance));
+    summaryBoxes[2]->SetLabel("Savings Balance: " + wxString::Format("%.2f", summary.savingsBalance));
+    summaryBoxes[3]->SetLabel("Credit Balance: " + wxString::Format("%.2f", summary.creditBalance));
+    summaryBoxes[4]->SetLabel("ISA Balance: " + wxString::Format("%.2f", summary.ISABalance));
+    summaryBoxes[5]->SetLabel("GIA Balance: " + wxString::Format("%.2f", summary.GIABalance));
+    summaryBoxes[6]->SetLabel("Crypto Balance: " + wxString::Format("%.2f", summary.CryptoBalance));
+    summaryBoxes[7]->SetLabel("Total Interest: " + wxString::Format("%.2f", summary.totalInterest));
+}
+
 // Event handler for quitting the application
 void MyFrame::OnQuit(wxCommandEvent &WXUNUSED(event))
 {
@@ -179,6 +229,10 @@ void MyFrame::OnAbout(wxCommandEvent &WXUNUSED(event))
 void MyFrame::OnAddAccount(wxCommandEvent &WXUNUSED(event))
 {
     (new AccountAddFrame(this))->Show();
+}
+void MyFrame::OnSaveSummary(wxCommandEvent &WXUNUSED(event))
+{
+    summary.SaveFinanceSummary();
 }
 
 // Constructor for the AccountAddFrame
@@ -234,9 +288,8 @@ void AccountAddFrame::OnSubmit(wxCommandEvent &WXUNUSED(event))
     {
         parentFrame->accountList.push_back(newAccount);
         newAccount.AddAccountToCSV();
-        FinanceSummary summary(parentFrame->accountList);
-        summary.SaveFinanceSummary();
         parentFrame->LoadAccounts();
+        parentFrame->LoadSummary();
     }
 
     // Close the frame after submission
