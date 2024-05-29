@@ -306,6 +306,18 @@ void AccountAddFrame::OnSubmit(wxCommandEvent &event)
         double interest = interestCtrl->GetValue();
 
         // Process the data
+        Account newAccount(name.ToStdString(), bank.ToStdString(), balance, interest, type.ToStdString());
+
+        InfoFrame *parentFrame = dynamic_cast<InfoFrame *>(GetParent());
+        if (parentFrame)
+        {
+            parentFrame->accountList.push_back(newAccount);
+            newAccount.AddAccountToCSV();
+            parentFrame->LoadAccounts();
+            parentFrame->LoadSummary();
+        }
+        // Close the frame after submission
+        Close(true);
     }
     catch (const std::exception &e)
     {
