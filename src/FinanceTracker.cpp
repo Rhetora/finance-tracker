@@ -239,80 +239,75 @@ void InfoFrame::OnSaveSummary(wxCommandEvent &WXUNUSED(event))
     summary.SaveFinanceSummary();
 }
 
-// Constructor for the AccountAddFrame
+// Frame constructor
 AccountAddFrame::AccountAddFrame(wxWindow *parent)
-    : wxFrame(parent, wxID_ANY, "New Account", wxDefaultPosition, wxSize(400, 500)) // Adjusted size here
+    : wxFrame(parent, wxID_ANY, "New Account", wxDefaultPosition, wxSize(400, 500))
 {
     wxPanel *panel = new wxPanel(this, wxID_ANY);
 
     wxBoxSizer *vbox = new wxBoxSizer(wxVERTICAL);
 
-    // Creating input fields for account details
-    nameCtrl = new wxTextCtrl(panel, wxID_ANY, "", wxDefaultPosition, wxSize(200, -1));
-    bankCtrl = new wxTextCtrl(panel, wxID_ANY, "", wxDefaultPosition, wxSize(200, -1));
-    balanceCtrl = new wxSpinCtrlDouble(panel, wxID_ANY, "", wxDefaultPosition, wxSize(200, -1));
-    balanceCtrl->SetRange(-1000000, 1000000); // Set the valid range
-    balanceCtrl->SetIncrement(0.01);       // Set the increment
+    const int controlWidth = 200;
+    const int controlHeight = -1;
+    const int borderSize = 5;
 
-    interestCtrl = new wxSpinCtrlDouble(panel, wxID_ANY, "", wxDefaultPosition, wxSize(200, -1));
-    interestCtrl->SetRange(-1000000, 1000000); // Set the valid range
-    interestCtrl->SetIncrement(0.01);       // Set the increment
-    typeCtrl = new wxTextCtrl(panel, wxID_ANY, "", wxDefaultPosition, wxSize(200, -1));
+    wxStaticText *bankLabel = new wxStaticText(panel, wxID_ANY, "Bank");
+    bankCtrl = new wxTextCtrl(panel, wxID_ANY, "", wxDefaultPosition, wxSize(controlWidth, controlHeight));
+    vbox->Add(bankLabel, 0, wxALL, borderSize);
+    vbox->Add(bankCtrl, 0, wxALL | wxEXPAND, borderSize);
 
-    vbox->Add(new wxStaticText(panel, wxID_ANY, "Name"), 0, wxALL, 5);
-    vbox->Add(nameCtrl, 0, wxALL | wxEXPAND, 5);
-    vbox->Add(new wxStaticText(panel, wxID_ANY, "Bank"), 0, wxALL, 5);
-    vbox->Add(bankCtrl, 0, wxALL | wxEXPAND, 5);
-    vbox->Add(new wxStaticText(panel, wxID_ANY, "Balance"), 0, wxALL, 5);
-    vbox->Add(balanceCtrl, 0, wxALL | wxEXPAND, 5);
-    vbox->Add(new wxStaticText(panel, wxID_ANY, "Interest"), 0, wxALL, 5);
-    vbox->Add(interestCtrl, 0, wxALL | wxEXPAND, 5);
-    vbox->Add(new wxStaticText(panel, wxID_ANY, "Type"), 0, wxALL, 5);
-    vbox->Add(typeCtrl, 0, wxALL | wxEXPAND, 5);
+    wxStaticText *nameLabel = new wxStaticText(panel, wxID_ANY, "Name");
+    nameCtrl = new wxTextCtrl(panel, wxID_ANY, "", wxDefaultPosition, wxSize(controlWidth, controlHeight));
+    vbox->Add(nameLabel, 0, wxALL, borderSize);
+    vbox->Add(nameCtrl, 0, wxALL | wxEXPAND, borderSize);
 
-    // Submit button
-    wxButton *submitBtn = new wxButton(panel, Submit_Account, "Submit");
-    vbox->Add(submitBtn, 0, wxALL | wxALIGN_CENTER, 10);
+    wxStaticText *balanceLabel = new wxStaticText(panel, wxID_ANY, "Balance");
+    balanceCtrl = new wxSpinCtrlDouble(panel, wxID_ANY, "", wxDefaultPosition, wxSize(controlWidth, controlHeight));
+    balanceCtrl->SetRange(-10000, 10000);
+    balanceCtrl->SetIncrement(0.1);
+    vbox->Add(balanceLabel, 0, wxALL, borderSize);
+    vbox->Add(balanceCtrl, 0, wxALL | wxEXPAND, borderSize);
+
+    wxStaticText *interestLabel = new wxStaticText(panel, wxID_ANY, "Interest");
+    interestCtrl = new wxSpinCtrlDouble(panel, wxID_ANY, "", wxDefaultPosition, wxSize(controlWidth, controlHeight));
+    interestCtrl->SetRange(-10000, 10000);
+    interestCtrl->SetIncrement(0.1);
+    vbox->Add(interestLabel, 0, wxALL, borderSize);
+    vbox->Add(interestCtrl, 0, wxALL | wxEXPAND, borderSize);
+
+    wxStaticText *typeLabel = new wxStaticText(panel, wxID_ANY, "Type");
+    typeCtrl = new wxTextCtrl(panel, wxID_ANY, "", wxDefaultPosition, wxSize(controlWidth, controlHeight));
+    vbox->Add(typeLabel, 0, wxALL, borderSize);
+    vbox->Add(typeCtrl, 0, wxALL | wxEXPAND, borderSize);
+
+    wxButton *submitBtn = new wxButton(panel, wxID_ANY, "Submit");
+    vbox->Add(submitBtn, 0, wxALL | wxALIGN_CENTER, borderSize);
 
     panel->SetSizer(vbox);
     vbox->SetSizeHints(this);
-    // Adjust the frame size to ensure all controls are visible
+
+    Bind(wxEVT_BUTTON, &AccountAddFrame::OnSubmit, this, submitBtn->GetId());
 }
 
-// Event handler for the submit button
-void AccountAddFrame::OnSubmit(wxCommandEvent &WXUNUSED(event))
+void AccountAddFrame::OnSubmit(wxCommandEvent &event)
 {
     try
     {
-        // Handle form submission, add validation and data processing here
         wxString name = nameCtrl->GetValue();
         wxString bank = bankCtrl->GetValue();
         wxString type = typeCtrl->GetValue();
-        double balance = balanceCtrl->GetValue();
-        double interest = interestCtrl->GetValue();
 
-        if (typeCtrl->GetValue().IsEmpty() || nameCtrl->GetValue().IsEmpty() || bankCtrl->GetValue().IsEmpty())
+        if (name.IsEmpty() || bank.IsEmpty() || type.IsEmpty())
         {
             throw std::invalid_argument("Fields are empty");
         }
 
-                
+        double balance = balanceCtrl->GetValue();
+        double interest = interestCtrl->GetValue();
 
-        Account newAccount(name.ToStdString(), bank.ToStdString(), balance, interest, type.ToStdString());
-
-        InfoFrame *parentFrame = dynamic_cast<InfoFrame *>(GetParent());
-        if (parentFrame)
-        {
-            parentFrame->accountList.push_back(newAccount);
-            newAccount.AddAccountToCSV();
-            parentFrame->LoadAccounts();
-            parentFrame->LoadSummary();
-        }
-
-        // Close the frame after submission
-        Close(true);
+        // Process the data
     }
-    catch (std::exception &e)
+    catch (const std::exception &e)
     {
         wxMessageBox(e.what(), "Error", wxOK | wxICON_ERROR, this);
     }
