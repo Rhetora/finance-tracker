@@ -7,6 +7,7 @@
 #include <sstream>
 #include <vector>
 #include <ctime>
+#include <memory>
 
 // Class representing financial account
 class Account
@@ -48,14 +49,18 @@ public:
     double cryptoBalance_;
     double totalInterest_;
 
+    /**
+     * Constructor to calculate financial summary.
+     *
+     * @param accountList A vector of Account objects to calculate the summary from.
+     */
+    FinanceSummary(std::vector<Account> &accountList);
 
-    // Constructor to calculate financial summary
-    FinanceSummary(std::vector<Account> accountList);
-
-    // Append a snapshot of financial summary to history CSV file
-    void SaveFinanceSummary();
+    /**
+     * Append a snapshot of financial summary to history CSV file.
+     */
+    void SaveFinanceSummary() const;
 };
-
 
 // Load list of accounts from accounts CSV file
 std::vector<Account> LoadAccountsFromCSV();
@@ -93,7 +98,7 @@ void Account::AddAccountToCSV()
     file.close();
 }
 
-FinanceSummary::FinanceSummary(std::vector<Account> accountList)
+FinanceSummary::FinanceSummary(std::vector<Account> &accountList)
 {
     totalBalance_ = 0;
     currentBalance_ = 0;
@@ -136,7 +141,7 @@ FinanceSummary::FinanceSummary(std::vector<Account> accountList)
     }
 }
 
-void FinanceSummary::SaveFinanceSummary()
+void FinanceSummary::SaveFinanceSummary() const
 {
     std::ofstream file("history.csv", std::ios::app);
     if (!file.good())
@@ -145,13 +150,11 @@ void FinanceSummary::SaveFinanceSummary()
         file.close();
         return;
     }
-
     if (!file.is_open())
     {
         std::cerr << "Error opening file" << std::endl;
         return;
     }
-
     time_t now = time(0);
     char *dt = ctime(&now);
     tm *gmtm = gmtime(&now);
@@ -171,14 +174,13 @@ std::vector<Account> LoadAccountsFromCSV()
         file.close();
         return accountList;
     }
-
     if (!file.is_open())
     {
         std::cerr << "Error opening file" << std::endl;
         return accountList;
     }
-
     std::string line;
+
     while (std::getline(file, line))
     {
         std::istringstream ss(line);
@@ -195,6 +197,5 @@ std::vector<Account> LoadAccountsFromCSV()
             accountList.push_back(Account(name, bank, balance, interest, type));
         }
     }
-
     return accountList;
 }
