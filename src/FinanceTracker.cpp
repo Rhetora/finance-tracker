@@ -1,5 +1,6 @@
 #include "../include/Account.h"
 #include "wx/wx.h"
+#include <wx/spinctrl.h>
 #include "wx/grid.h"
 #include <locale.h>
 
@@ -47,8 +48,8 @@ private:
     void OnSubmit(wxCommandEvent &event);
     wxTextCtrl *nameCtrl;
     wxTextCtrl *bankCtrl;
-    wxTextCtrl *balanceCtrl;
-    wxTextCtrl *interestCtrl;
+    wxSpinCtrlDouble *balanceCtrl;
+    wxSpinCtrlDouble *interestCtrl;
     wxTextCtrl *typeCtrl;
 
     wxDECLARE_EVENT_TABLE();
@@ -249,8 +250,13 @@ AccountAddFrame::AccountAddFrame(wxWindow *parent)
     // Creating input fields for account details
     nameCtrl = new wxTextCtrl(panel, wxID_ANY, "", wxDefaultPosition, wxSize(200, -1));
     bankCtrl = new wxTextCtrl(panel, wxID_ANY, "", wxDefaultPosition, wxSize(200, -1));
-    balanceCtrl = new wxTextCtrl(panel, wxID_ANY, "", wxDefaultPosition, wxSize(200, -1));
-    interestCtrl = new wxTextCtrl(panel, wxID_ANY, "", wxDefaultPosition, wxSize(200, -1));
+    balanceCtrl = new wxSpinCtrlDouble(panel, wxID_ANY, "", wxDefaultPosition, wxSize(200, -1));
+    balanceCtrl->SetRange(-1000000, 1000000); // Set the valid range
+    balanceCtrl->SetIncrement(0.01);       // Set the increment
+
+    interestCtrl = new wxSpinCtrlDouble(panel, wxID_ANY, "", wxDefaultPosition, wxSize(200, -1));
+    interestCtrl->SetRange(-1000000, 1000000); // Set the valid range
+    interestCtrl->SetIncrement(0.01);       // Set the increment
     typeCtrl = new wxTextCtrl(panel, wxID_ANY, "", wxDefaultPosition, wxSize(200, -1));
 
     vbox->Add(new wxStaticText(panel, wxID_ANY, "Name"), 0, wxALL, 5);
@@ -281,10 +287,16 @@ void AccountAddFrame::OnSubmit(wxCommandEvent &WXUNUSED(event))
         // Handle form submission, add validation and data processing here
         wxString name = nameCtrl->GetValue();
         wxString bank = bankCtrl->GetValue();
-        double balance, interest;
-        balanceCtrl->GetValue().ToDouble(&balance);
-        interestCtrl->GetValue().ToDouble(&interest);
         wxString type = typeCtrl->GetValue();
+        double balance = balanceCtrl->GetValue();
+        double interest = interestCtrl->GetValue();
+
+        if (typeCtrl->GetValue().IsEmpty() || nameCtrl->GetValue().IsEmpty() || bankCtrl->GetValue().IsEmpty())
+        {
+            throw std::invalid_argument("Fields are empty");
+        }
+
+                
 
         Account newAccount(name.ToStdString(), bank.ToStdString(), balance, interest, type.ToStdString());
 
