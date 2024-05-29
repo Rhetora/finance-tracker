@@ -54,6 +54,7 @@ private:
     wxDECLARE_EVENT_TABLE();
 };
 
+// Event table for the main frame
 enum
 {
     Minimal_Quit = wxID_EXIT,
@@ -275,25 +276,32 @@ AccountAddFrame::AccountAddFrame(wxWindow *parent)
 // Event handler for the submit button
 void AccountAddFrame::OnSubmit(wxCommandEvent &WXUNUSED(event))
 {
-    // Handle form submission, add validation and data processing here
-    wxString name = nameCtrl->GetValue();
-    wxString bank = bankCtrl->GetValue();
-    double balance, interest;
-    balanceCtrl->GetValue().ToDouble(&balance);
-    interestCtrl->GetValue().ToDouble(&interest);
-    wxString type = typeCtrl->GetValue();
-
-    Account newAccount(name.ToStdString(), bank.ToStdString(), balance, interest, type.ToStdString());
-
-    InfoFrame *parentFrame = dynamic_cast<InfoFrame *>(GetParent());
-    if (parentFrame)
+    try
     {
-        parentFrame->accountList.push_back(newAccount);
-        newAccount.AddAccountToCSV();
-        parentFrame->LoadAccounts();
-        parentFrame->LoadSummary();
-    }
+        // Handle form submission, add validation and data processing here
+        wxString name = nameCtrl->GetValue();
+        wxString bank = bankCtrl->GetValue();
+        double balance, interest;
+        balanceCtrl->GetValue().ToDouble(&balance);
+        interestCtrl->GetValue().ToDouble(&interest);
+        wxString type = typeCtrl->GetValue();
 
-    // Close the frame after submission
-    Close(true);
+        Account newAccount(name.ToStdString(), bank.ToStdString(), balance, interest, type.ToStdString());
+
+        InfoFrame *parentFrame = dynamic_cast<InfoFrame *>(GetParent());
+        if (parentFrame)
+        {
+            parentFrame->accountList.push_back(newAccount);
+            newAccount.AddAccountToCSV();
+            parentFrame->LoadAccounts();
+            parentFrame->LoadSummary();
+        }
+
+        // Close the frame after submission
+        Close(true);
+    }
+    catch (std::exception &e)
+    {
+        wxMessageBox(e.what(), "Error", wxOK | wxICON_ERROR, this);
+    }
 }

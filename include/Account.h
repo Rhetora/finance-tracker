@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <set>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -13,6 +14,8 @@ class Account
 private:
     double balance_;
     double interest_;
+
+    static const std::set<std::string> validTypes_;
 
 public:
     std::string name_;
@@ -59,9 +62,15 @@ std::vector<Account> LoadAccountsFromCSV();
 
 // Implementation
 
+const std::set<std::string> Account::validTypes_ = {"Savings", "Current", "Credit", "ISA", "GIA", "Crypto"};
+
 Account::Account(const std::string &n, const std::string &b, double bal, double i, const std::string &t)
     : name_(n), bank_(b), balance_(bal), interest_(i), type_(t)
 {
+    if (validTypes_.find(t) == validTypes_.end())
+    {
+        throw std::invalid_argument("Invalid account type");
+    }
 }
 
 double Account::balance() const { return balance_; }
@@ -77,8 +86,7 @@ void Account::AddAccountToCSV()
     std::ofstream file("accounts.csv", std::ios::app);
     if (!file.is_open())
     {
-        std::cerr << "Error opening file" << std::endl;
-        return;
+        throw std::runtime_error("File is not open");
     }
 
     file << name_ << "," << bank_ << "," << balance() << "," << interest() << "," << type_ << std::endl;
