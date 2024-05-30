@@ -21,6 +21,7 @@ public:
     void OnQuit(wxCommandEvent &event);
     void OnAbout(wxCommandEvent &event);
     void OnAddAccount(wxCommandEvent &event);
+    void OnVisualise(wxCommandEvent &event);
     void OnSaveSummary(wxCommandEvent &event);
 
     // Public methods to update frame contents
@@ -32,7 +33,7 @@ public:
 private:
     // Helper functions to set up frame contents
     void CreateMenu();
-    wxGrid* CreateGrid();
+    wxGrid *CreateGrid();
     void CreateSummaryBoxes();
     void InitializeGrid();
     // void SetSizerAndFit();
@@ -63,6 +64,20 @@ private:
     wxDECLARE_EVENT_TABLE();
 };
 
+// VISUALISE Frame class
+class VisualiseFrame : public wxFrame
+{
+public:
+    VisualiseFrame(wxWindow *parent);
+
+private:
+    // wxWidgets components
+    // wxPanel *panel;
+    // wxChartCtrl *chartCtrl;
+
+    wxDECLARE_EVENT_TABLE();
+};
+
 // Event table
 enum
 {
@@ -70,21 +85,26 @@ enum
     Minimal_About = wxID_ABOUT,
     Add_Account = 1,
     Submit_Account = 2,
-    Save_Summary = 3
+    Save_Summary = 3,
+    Visualise = 4
 };
 
 wxBEGIN_EVENT_TABLE(HomeFrame, wxFrame)
     EVT_MENU(Minimal_Quit, HomeFrame::OnQuit)
         EVT_MENU(Minimal_About, HomeFrame::OnAbout)
             EVT_MENU(Add_Account, HomeFrame::OnAddAccount)
-                EVT_BUTTON(Save_Summary, HomeFrame::OnSaveSummary)
-                    wxEND_EVENT_TABLE()
+                EVT_MENU(Visualise, HomeFrame::OnVisualise)
+                    EVT_BUTTON(Save_Summary, HomeFrame::OnSaveSummary)
+                        wxEND_EVENT_TABLE()
 
-                        wxBEGIN_EVENT_TABLE(AccountAddFrame, wxFrame)
-                            EVT_BUTTON(Submit_Account, AccountAddFrame::OnSubmit)
-                                wxEND_EVENT_TABLE()
+                            wxBEGIN_EVENT_TABLE(AccountAddFrame, wxFrame)
+                                EVT_BUTTON(Submit_Account, AccountAddFrame::OnSubmit)
+                                    wxEND_EVENT_TABLE()
+                                        wxBEGIN_EVENT_TABLE(VisualiseFrame, wxFrame)
 
-                                    wxIMPLEMENT_APP(MyApp);
+                                            wxEND_EVENT_TABLE()
+
+                                                wxIMPLEMENT_APP(MyApp);
 
 // Application initialization
 bool MyApp::OnInit()
@@ -122,6 +142,7 @@ void HomeFrame::CreateMenu()
     helpMenu->Append(Minimal_About, "&About\tF1", "Show about dialog");
 
     fileMenu->Append(Add_Account, "Add Account", "Add a financial account");
+    fileMenu->Append(Visualise, "Visualise", "Visualise financial history");
     fileMenu->Append(Minimal_Quit, "E&xit\tAlt-X", "Quit this program");
 
     wxMenuBar *menuBar = new wxMenuBar();
@@ -180,7 +201,7 @@ void HomeFrame::CreateSummaryBoxes()
     SetSizerAndFit(verticalSizer);
 }
 
-wxGrid* HomeFrame::CreateGrid()
+wxGrid *HomeFrame::CreateGrid()
 {
     grid = new wxGrid(this, wxID_ANY);
     grid->CreateGrid(0, 5); // Initially 0 rows, 5 columns
@@ -248,6 +269,11 @@ void HomeFrame::OnAbout(wxCommandEvent &WXUNUSED(event))
 void HomeFrame::OnAddAccount(wxCommandEvent &WXUNUSED(event))
 {
     (new AccountAddFrame(this))->Show();
+}
+
+void HomeFrame::OnVisualise(wxCommandEvent &WXUNUSED(event))
+{
+    (new VisualiseFrame(this))->Show();
 }
 
 void HomeFrame::OnSaveSummary(wxCommandEvent &WXUNUSED(event))
@@ -340,4 +366,12 @@ void AccountAddFrame::OnSubmit(wxCommandEvent &event)
     {
         wxMessageBox(e.what(), "Error", wxOK | wxICON_ERROR, this);
     }
+}
+
+// VISUALISE: Frame constructor
+VisualiseFrame::VisualiseFrame(wxWindow *parent)
+    : wxFrame(parent, wxID_ANY, "Visualise Data", wxDefaultPosition, wxSize(800, 600))
+{
+    // panel = new wxPanel(this, wxID_ANY);
+    // chartCtrl = new wxChartCtrl(panel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
 }
