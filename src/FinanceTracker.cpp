@@ -11,7 +11,7 @@ public:
     virtual bool OnInit() wxOVERRIDE;
 };
 
-// Frame class for the main application window
+// HOME: Frame class
 class HomeFrame : public wxFrame
 {
 public:
@@ -46,7 +46,7 @@ private:
     wxDECLARE_EVENT_TABLE();
 };
 
-// Frame class for adding a new account
+// ACCOUNTADD: Frame class
 class AccountAddFrame : public wxFrame
 {
 public:
@@ -64,7 +64,7 @@ private:
     wxDECLARE_EVENT_TABLE();
 };
 
-// Event table for the main frame
+// Event table
 enum
 {
     Minimal_Quit = wxID_EXIT,
@@ -100,7 +100,7 @@ bool MyApp::OnInit()
     return true;
 }
 
-// Frame constructor
+// HOME: Frame constructor
 HomeFrame::HomeFrame(const wxString &title)
     : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(800, 600)) // Set the size here
 {
@@ -115,6 +115,7 @@ HomeFrame::HomeFrame(const wxString &title)
     LoadSummary();
 }
 
+// HOME: Create UI elements
 void HomeFrame::CreateMenu()
 {
 #if wxUSE_MENUBAR
@@ -181,7 +182,6 @@ void HomeFrame::CreateSummaryBoxes()
     SetSizerAndFit(verticalSizer);
 }
 
-// Initialize the grid with columns for account details
 wxGrid* HomeFrame::CreateGrid()
 {
     grid = new wxGrid(this, wxID_ANY);
@@ -195,7 +195,7 @@ wxGrid* HomeFrame::CreateGrid()
     return grid;
 }
 
-// Load existing accounts into the grid
+// HOME: Update data in UI
 void HomeFrame::LoadAccounts()
 {
     if (grid->GetNumberRows() > 0)
@@ -214,7 +214,6 @@ void HomeFrame::LoadAccounts()
     grid->Refresh();
 }
 
-// Function to load and update the summary values
 void HomeFrame::LoadSummary()
 {
     savedData.currentSummary_ = FinanceSummary(savedData.accountList_);
@@ -229,13 +228,12 @@ void HomeFrame::LoadSummary()
     summaryBoxes[7]->SetLabel("Total Interest: " + wxString::Format("%#'.2f", summary.totalInterest_));
 }
 
-// Event handler for quitting the application
+// HOME: Event handlers
 void HomeFrame::OnQuit(wxCommandEvent &WXUNUSED(event))
 {
     Close(true);
 }
 
-// Event handler for showing the "About" dialog
 void HomeFrame::OnAbout(wxCommandEvent &WXUNUSED(event))
 {
     wxMessageBox(wxString::Format(
@@ -249,7 +247,6 @@ void HomeFrame::OnAbout(wxCommandEvent &WXUNUSED(event))
                  this);
 }
 
-// Event handler for adding a new account
 void HomeFrame::OnAddAccount(wxCommandEvent &WXUNUSED(event))
 {
     (new AccountAddFrame(this))->Show();
@@ -261,7 +258,7 @@ void HomeFrame::OnSaveSummary(wxCommandEvent &WXUNUSED(event))
     savedData.savedSummaryList_.push_back(savedData.currentSummary_);
 }
 
-// Frame constructor
+// ACCOUNTADD: Frame constructor
 AccountAddFrame::AccountAddFrame(wxWindow *parent)
     : wxFrame(parent, wxID_ANY, "New Account", wxDefaultPosition, wxSize(400, 500))
 {
@@ -311,6 +308,7 @@ AccountAddFrame::AccountAddFrame(wxWindow *parent)
     Bind(wxEVT_BUTTON, &AccountAddFrame::OnSubmit, this, submitBtn->GetId());
 }
 
+// ACCOUNTADD: Event handlers
 void AccountAddFrame::OnSubmit(wxCommandEvent &event)
 {
     try

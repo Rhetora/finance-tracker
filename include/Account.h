@@ -37,6 +37,7 @@ public:
     void AddAccountToCSV();
 };
 
+// Class representing financial summary
 class FinanceSummary
 {
 public:
@@ -80,6 +81,7 @@ public:
 
 // Implementation
 
+// Account
 const std::set<std::string> Account::validTypes_ = {"Savings", "Current", "Credit", "ISA", "GIA", "Crypto"};
 
 Account::Account(const std::string &n, const std::string &b, double bal, double i, const std::string &t)
@@ -111,6 +113,7 @@ void Account::AddAccountToCSV()
     file.close();
 }
 
+//Finance Summary
 FinanceSummary::FinanceSummary(const std::vector<Account> &accountList)
 {
     totalBalance_ = 0;
@@ -188,6 +191,7 @@ SavedData::SavedData()
 {
 }
 
+//Saved Data
 std::vector<Account> SavedData::LoadAccountsFromCSV()
 {
     std::vector<Account> accountList;
