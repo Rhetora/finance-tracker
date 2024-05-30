@@ -24,8 +24,7 @@ public:
     void OnSaveSummary(wxCommandEvent &event);
 
     // Public methods to update frame contents
-    void LoadAccounts();
-    void LoadSummary();
+    void LoadData();
 
     // Store program data
     SavedData savedData;
@@ -111,8 +110,7 @@ HomeFrame::HomeFrame(const wxString &title)
 
     // Load initial data
     savedData = SavedData();
-    LoadAccounts();
-    LoadSummary();
+    LoadData();
 }
 
 // HOME: Create UI elements
@@ -196,8 +194,12 @@ wxGrid* HomeFrame::CreateGrid()
 }
 
 // HOME: Update data in UI
-void HomeFrame::LoadAccounts()
+void HomeFrame::LoadData()
 {
+    savedData.currentSummary_ = FinanceSummary(savedData.accountList_);
+    FinanceSummary summary = savedData.currentSummary_;
+
+    // Update grid with account data
     if (grid->GetNumberRows() > 0)
         grid->DeleteRows(0, grid->GetNumberRows());
     for (const Account &account : savedData.accountList_)
@@ -212,12 +214,8 @@ void HomeFrame::LoadAccounts()
     }
     grid->AutoSizeColumns(); // Automatically size columns to fit content
     grid->Refresh();
-}
 
-void HomeFrame::LoadSummary()
-{
-    savedData.currentSummary_ = FinanceSummary(savedData.accountList_);
-    FinanceSummary summary = savedData.currentSummary_;
+    // Update summary boxes
     summaryBoxes[0]->SetLabel("Total Balance: " + wxString::Format("%#'.2f", summary.totalBalance_));
     summaryBoxes[1]->SetLabel("Current Balance: " + wxString::Format("%#'.2f", summary.currentBalance_));
     summaryBoxes[2]->SetLabel("Savings Balance: " + wxString::Format("%#'.2f", summary.savingsBalance_));
@@ -333,8 +331,7 @@ void AccountAddFrame::OnSubmit(wxCommandEvent &event)
         {
             parentFrame->savedData.accountList_.push_back(newAccount);
             newAccount.AddAccountToCSV();
-            parentFrame->LoadAccounts();
-            parentFrame->LoadSummary();
+            parentFrame->LoadData();
         }
         // Close the frame after submission
         Close(true);
