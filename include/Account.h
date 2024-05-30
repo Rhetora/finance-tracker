@@ -54,16 +54,29 @@ public:
      *
      * @param accountList A vector of Account objects to calculate the summary from.
      */
-    FinanceSummary(std::vector<Account> &accountList);
+    FinanceSummary(const std::vector<Account> &accountList);
 
+    FinanceSummary(std::string date, double totalBalance, double currentBalance, double savingsBalance, double creditBalance, double isaBalance, double giaBalance, double cryptoBalance, double totalInterest);
     /**
      * Append a snapshot of financial summary to history CSV file.
      */
     void SaveFinanceSummary() const;
 };
 
-// Load list of accounts from accounts CSV file
-std::vector<Account> LoadAccountsFromCSV();
+// Class holding application saved data
+class SavedData
+{
+public:
+    std::vector<Account> accountList_;
+    std::vector<FinanceSummary> savedSummaryList_;
+    FinanceSummary currentSummary_;
+
+    SavedData();
+
+    // Load list of accounts from accounts CSV file
+    std::vector<Account> LoadAccountsFromCSV();
+    std::vector<FinanceSummary> loadFinanceSummaryFromCSV();
+};
 
 // Implementation
 
@@ -98,7 +111,7 @@ void Account::AddAccountToCSV()
     file.close();
 }
 
-FinanceSummary::FinanceSummary(std::vector<Account> &accountList)
+FinanceSummary::FinanceSummary(const std::vector<Account> &accountList)
 {
     totalBalance_ = 0;
     currentBalance_ = 0;
@@ -141,6 +154,11 @@ FinanceSummary::FinanceSummary(std::vector<Account> &accountList)
     }
 }
 
+FinanceSummary::FinanceSummary(std::string date, double totalBalance, double currentBalance, double savingsBalance, double creditBalance, double isaBalance, double giaBalance, double cryptoBalance, double totalInterest)
+    : totalBalance_(totalBalance), currentBalance_(currentBalance), savingsBalance_(savingsBalance),
+      creditBalance_(creditBalance), isaBalance_(isaBalance), giaBalance_(giaBalance),
+      cryptoBalance_(cryptoBalance), totalInterest_(totalInterest) {}
+
 void FinanceSummary::SaveFinanceSummary() const
 {
     std::ofstream file("history.csv", std::ios::app);
@@ -163,8 +181,14 @@ void FinanceSummary::SaveFinanceSummary() const
     file << dt << "," << totalBalance_ << "," << currentBalance_ << "," << savingsBalance_ << "," << creditBalance_ << "," << isaBalance_ << "," << giaBalance_ << "," << cryptoBalance_ << "," << totalInterest_ << "," << std::endl;
     file.close();
 }
+SavedData::SavedData()
+    : accountList_(LoadAccountsFromCSV()),
+      savedSummaryList_(loadFinanceSummaryFromCSV()),
+      currentSummary_(accountList_)
+{
+}
 
-std::vector<Account> LoadAccountsFromCSV()
+std::vector<Account> SavedData::LoadAccountsFromCSV()
 {
     std::vector<Account> accountList;
     std::ifstream file("accounts.csv");
@@ -198,4 +222,49 @@ std::vector<Account> LoadAccountsFromCSV()
         }
     }
     return accountList;
+}
+
+std::vector<FinanceSummary> SavedData::loadFinanceSummaryFromCSV()
+{
+    std::vector<FinanceSummary> financeSummaryList;
+    std::ifstream file("history.csv");
+    if (!file.good())
+    {
+        std::ofstream file("history.csv");
+        file.close();
+        return financeSummaryList;
+    }
+    if (!file.is_open())
+    {
+        std::cerr << "Error opening file" << std::endl;
+        return financeSummaryList;
+    }
+    std::string line;
+
+    while (std::getline(file, line))
+    {
+        std::istringstream ss(line);
+        std::string date;
+        double totalBalance, currentBalance, savingsBalance, creditBalance, isaBalance, giaBalance, cryptoBalance, totalInterest;
+        if (std::getline(ss, date, ',') &&
+            ss >> totalBalance &&
+            ss.ignore() &&
+            ss >> currentBalance &&
+            ss.ignore() &&
+            ss >> savingsBalance &&
+            ss.ignore() &&
+            ss >> creditBalance &&
+            ss.ignore() &&
+            ss >> isaBalance &&
+            ss.ignore() &&
+            ss >> giaBalance &&
+            ss.ignore() &&
+            ss >> cryptoBalance &&
+            ss.ignore() &&
+            ss >> totalInterest)
+        {
+            financeSummaryList.push_back(FinanceSummary(date, totalBalance, currentBalance, savingsBalance, creditBalance, isaBalance, giaBalance, cryptoBalance, totalInterest));
+        }
+    }
+    return financeSummaryList;
 }
