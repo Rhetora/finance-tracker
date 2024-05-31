@@ -2,6 +2,7 @@
 #include "wx/wx.h"
 #include <wx/spinctrl.h>
 #include "wx/grid.h"
+#include "wx/mathplot.h"
 #include <locale.h>
 
 // Application class
@@ -71,9 +72,7 @@ public:
     VisualiseFrame(wxWindow *parent);
 
 private:
-    // wxWidgets components
-    // wxPanel *panel;
-    // wxChartCtrl *chartCtrl;
+    void CreatePlot();
 
     wxDECLARE_EVENT_TABLE();
 };
@@ -205,12 +204,13 @@ wxGrid *HomeFrame::CreateGrid()
 {
     grid = new wxGrid(this, wxID_ANY);
     grid->CreateGrid(0, 5); // Initially 0 rows, 5 columns
-    grid->SetColLabelValue(0, "Name");
-    grid->SetColLabelValue(1, "Bank");
+    grid->SetColLabelValue(0, "Bank");
+    grid->SetColLabelValue(1, "Name");
     grid->SetColLabelValue(2, "Balance");
     grid->SetColLabelValue(3, "Interest");
     grid->SetColLabelValue(4, "Type");
     grid->AutoSizeColumns(); // Automatically size columns to fit content
+    grid->HideRowLabels();   // Hide row numbers
     return grid;
 }
 
@@ -227,8 +227,8 @@ void HomeFrame::LoadData()
     {
         int newRow = grid->GetNumberRows();
         grid->AppendRows(1);
-        grid->SetCellValue(newRow, 0, account.name_);
-        grid->SetCellValue(newRow, 1, account.bank_);
+        grid->SetCellValue(newRow, 0, account.bank_);
+        grid->SetCellValue(newRow, 1, account.name_);
         grid->SetCellValue(newRow, 2, wxString::Format("%#'.2f", account.balance()));
         grid->SetCellValue(newRow, 3, wxString::Format("%.2f", account.interest()));
         grid->SetCellValue(newRow, 4, account.type_);
@@ -307,14 +307,14 @@ AccountAddFrame::AccountAddFrame(wxWindow *parent)
     wxStaticText *balanceLabel = new wxStaticText(panel, wxID_ANY, "Balance");
     balanceCtrl = new wxSpinCtrlDouble(panel, wxID_ANY, "", wxDefaultPosition, wxSize(controlWidth, controlHeight));
     balanceCtrl->SetRange(-10000, 10000);
-    balanceCtrl->SetIncrement(0.1);
+    balanceCtrl->SetIncrement(0.01);
     vbox->Add(balanceLabel, 0, wxALL, borderSize);
     vbox->Add(balanceCtrl, 0, wxALL | wxEXPAND, borderSize);
 
     wxStaticText *interestLabel = new wxStaticText(panel, wxID_ANY, "Interest");
     interestCtrl = new wxSpinCtrlDouble(panel, wxID_ANY, "", wxDefaultPosition, wxSize(controlWidth, controlHeight));
     interestCtrl->SetRange(-10000, 10000);
-    interestCtrl->SetIncrement(0.1);
+    interestCtrl->SetIncrement(0.01);
     vbox->Add(interestLabel, 0, wxALL, borderSize);
     vbox->Add(interestCtrl, 0, wxALL | wxEXPAND, borderSize);
 
@@ -370,8 +370,32 @@ void AccountAddFrame::OnSubmit(wxCommandEvent &event)
 
 // VISUALISE: Frame constructor
 VisualiseFrame::VisualiseFrame(wxWindow *parent)
-    : wxFrame(parent, wxID_ANY, "Visualise Data", wxDefaultPosition, wxSize(800, 600))
+    : wxFrame(parent, wxID_ANY, "Visualise Financial Summaries", wxDefaultPosition, wxSize(800, 600))
 {
-    // panel = new wxPanel(this, wxID_ANY);
-    // chartCtrl = new wxChartCtrl(panel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
+    CreatePlot();
+}
+
+void VisualiseFrame::CreatePlot()
+{
+    // Create a new mpWindow
+    mpWindow *plotWindow = new mpWindow(this, wxID_ANY, wxDefaultPosition, wxSize(800, 600), wxSUNKEN_BORDER);
+
+    // Create and add layer for the X and Y axes
+    plotWindow->AddLayer(new mpScaleX(wxT("X"), mpALIGN_CENTER, true));
+    plotWindow->AddLayer(new mpScaleY(wxT("Y"), mpALIGN_CENTER, true));
+
+    // Create a simple sinusoidal line plot
+    class mpSin : public mpFX
+    {
+    public:
+        mpSin() : mpFX(wxT("Sin(x)")) {}
+        virtual double GetY(double x) { return sin(x); }
+    };
+
+    mpSin *sinLayer = new mpSin();
+    sinLayer->SetPen(wxPen(*wxRED, 2, wxSOLID));
+    plotWindow->AddLayer(sinLayer);
+
+    // Set the initial view to fit the sinusoidal plot
+    plotWindow->Fit();
 }
