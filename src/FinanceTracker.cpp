@@ -24,9 +24,12 @@ public:
     void OnAddAccount(wxCommandEvent &event);
     void OnVisualise(wxCommandEvent &event);
     void OnSaveSummary(wxCommandEvent &event);
+    void OnGridCellChange(wxGridEvent &event);
 
     // Public methods to update frame contents
     void LoadData();
+
+    
 
     // Store program data
     SavedData savedData;
@@ -130,6 +133,9 @@ HomeFrame::HomeFrame(const wxString &title)
     // Load initial data
     savedData = SavedData();
     LoadData();
+
+    // Bind event handler for cell value changes
+    grid->Bind(wxEVT_GRID_CELL_CHANGED, &HomeFrame::OnGridCellChange, this);
 }
 
 // HOME: Create UI elements
@@ -282,6 +288,59 @@ void HomeFrame::OnSaveSummary(wxCommandEvent &WXUNUSED(event))
     savedData.savedSummaryList_.push_back(savedData.currentSummary_);
 }
 
+void HomeFrame::OnGridCellChange(wxGridEvent &event)
+{
+    int row = event.GetRow();
+    int col = event.GetCol();
+    wxString newValue = grid->GetCellValue(row, col);
+
+    // Ensure the row index is within the bounds of the account list
+    if (row >= 0 && row < static_cast<int>(savedData.accountList_.size()))
+    {
+        Account &account = savedData.accountList_[row];
+
+        switch (col)
+        {
+        case 0:
+            account.bank_ = newValue.ToStdString();
+            break;
+        case 1:
+            account.name_ = newValue.ToStdString();
+            break;
+        case 2:
+        {
+            double balance;
+            if (newValue.ToDouble(&balance))
+            {
+                account.setBalance(balance);
+            }
+            break;
+        }
+        case 3:
+        {
+            double interest;
+            if (newValue.ToDouble(&interest))
+            {
+                account.setInterest(interest);
+            }
+            break;
+        }
+        case 4:
+            account.type_ = newValue.ToStdString();
+            break;
+        default:
+            break;
+        }
+
+        // Update accounts csv
+        savedData.UpdateAccountsInCSV(savedData.accountList_);
+        savedData.currentSummary_ = FinanceSummary(savedData.accountList_);
+
+        // Optionally, you can refresh the grid or the entire UI to reflect other dependent changes
+        LoadData();
+    }
+}
+
 // ACCOUNTADD: Frame constructor
 AccountAddFrame::AccountAddFrame(wxWindow *parent)
     : wxFrame(parent, wxID_ANY, "New Account", wxDefaultPosition, wxSize(400, 500))
@@ -381,21 +440,96 @@ void VisualiseFrame::CreatePlot()
     mpWindow *plotWindow = new mpWindow(this, wxID_ANY, wxDefaultPosition, wxSize(800, 600), wxSUNKEN_BORDER);
 
     // Create and add layer for the X and Y axes
-    plotWindow->AddLayer(new mpScaleX(wxT("X"), mpALIGN_CENTER, true));
-    plotWindow->AddLayer(new mpScaleY(wxT("Y"), mpALIGN_CENTER, true));
+    mpScaleX *xAxis = new mpScaleX(wxT("Date"), mpALIGN_BORDER_BOTTOM, true, mpX_DATETIME);
+    mpScaleY *yAxis = new mpScaleY(wxT("Balance (£)"), mpALIGN_LEFT, true);
+    xAxis->SetTicks(false);
+    yAxis->SetTicks(false);
+    plotWindow->AddLayer(xAxis);
+    plotWindow->AddLayer(yAxis);
 
-    // Create a simple sinusoidal line plot
-    class mpSin : public mpFX
+    // Define a custom line layer class
+    class LineLayer : public mpFXYVector
     {
     public:
-        mpSin() : mpFX(wxT("Sin(x)")) {}
-        virtual double GetY(double x) { return sin(x); }
+        LineLayer(const wxString &name, const std::vector<double> &xData, const std::vector<double> &yData, const wxColour &colour = *wxBLUE)
+            : mpFXYVector(name)
+        {
+            SetData(xData, yData);
+            SetContinuity(true);
+            SetPen(wxPen(colour, 2, wxSOLID));
+            SetDrawOutsideMargins(false);
+        }
     };
 
-    mpSin *sinLayer = new mpSin();
-    sinLayer->SetPen(wxPen(*wxRED, 2, wxSOLID));
-    plotWindow->AddLayer(sinLayer);
+    // Get the parent frame
+    HomeFrame *parentFrame = dynamic_cast<HomeFrame *>(GetParent());
 
-    // Set the initial view to fit the sinusoidal plot
-    plotWindow->Fit();
+    // Retrieve the finance summary points from the parent frame
+    auto financeSummaryPoints = parentFrame->savedData.getFinanceSummaryPoints();
+
+    // Define line colors and names
+    const std::vector<wxColour> lineColors = {
+        wxColor(255, 0, 0),   // Red
+        wxColor(0, 255, 0),   // Green
+        wxColor(0, 0, 255),   // Blue
+        wxColor(255, 255, 0), // Yellow
+        wxColor(255, 0, 255), // Magenta
+        wxColor(0, 255, 255), // Cyan
+        wxColor(128, 0, 0),   // Maroon
+        wxColor(0, 128, 0)    // Dark Green
+    };
+
+    const std::vector<wxString> lineNames = {
+        wxT("Total"),
+        wxT("Current"),
+        wxT("Savings"),
+        wxT("Credit"),
+        wxT("ISA"),
+        wxT("GIA"),
+        wxT("Crypto"),
+        wxT("Interest")};
+
+    // Create a legend
+    wxRect legendRect(100, 100, 200, 100);
+    mpInfoLegend *legend = new mpInfoLegend(legendRect);
+    plotWindow->AddLayer(legend);
+
+    // Iterate over each finance summary point
+    for (size_t i = 0; i < financeSummaryPoints.size(); ++i)
+    {
+        const auto &point = financeSummaryPoints[i];
+
+        // Extract the labels (dates) and values from the tuple
+        const std::vector<double> &labels = {3, 6, 7, 8};
+        const std::vector<double> &values = std::get<1>(point);
+
+        // Create a new line layer for each finance summary point with the corresponding color and name
+        wxString lineName = (i < lineNames.size()) ? lineNames[i] : wxString::Format(wxT("Line %d"), i + 1);
+        wxColour lineColor = (i < lineColors.size()) ? lineColors[i] : *wxBLACK;
+        LineLayer *lineLayer = new LineLayer(lineName, labels, values, lineColor);
+        plotWindow->AddLayer(lineLayer);
+    }
+
+    // Disable mouse pan and zoom
+    plotWindow->EnableMousePanZoom(false);
+
+    // Find the minimum and maximum Y values
+    double minY = std::numeric_limits<double>::max();
+    double maxY = std::numeric_limits<double>::lowest();
+
+
+    for (const auto &point : financeSummaryPoints)
+    {
+        const std::vector<double> &values = std::get<1>(point);
+        for (double value : values)
+        {
+            minY = std::min(minY, value);
+            maxY = std::max(maxY, value);
+        }
+    }
+
+    plotWindow->Fit(0, 10, minY - 1000, maxY + 1000);
+
+    // Enable auto-scaling for the Y-axis based on the largest value plotted
+    yAxis->SetLabelFormat(wxT("£%.2f"));
 }

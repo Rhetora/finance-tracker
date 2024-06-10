@@ -8,6 +8,8 @@
 #include <vector>
 #include <ctime>
 #include <memory>
+#include <cstring>
+#include <tuple>
 
 // Class representing financial account
 class Account
@@ -41,6 +43,7 @@ public:
 class FinanceSummary
 {
 public:
+    std::string date_;
     double totalBalance_;
     double currentBalance_;
     double savingsBalance_;
@@ -77,6 +80,8 @@ public:
     // Load list of accounts from accounts CSV file
     std::vector<Account> LoadAccountsFromCSV();
     std::vector<FinanceSummary> loadFinanceSummaryFromCSV();
+    std::vector<std::tuple<std::vector<double>, std::vector<double>>> getFinanceSummaryPoints();
+    void UpdateAccountsInCSV(std::vector<Account> accountList);
 };
 
 // Implementation
@@ -113,7 +118,7 @@ void Account::AddAccountToCSV()
     file.close();
 }
 
-//Finance Summary
+// Finance Summary
 FinanceSummary::FinanceSummary(const std::vector<Account> &accountList)
 {
     totalBalance_ = 0;
@@ -155,10 +160,14 @@ FinanceSummary::FinanceSummary(const std::vector<Account> &accountList)
             cryptoBalance_ += account.balance();
         }
     }
+    time_t now = time(0);
+    char *dt = ctime(&now);
+    tm *gmtm = gmtime(&now);
+    date_ = asctime(gmtm);
 }
 
 FinanceSummary::FinanceSummary(std::string date, double totalBalance, double currentBalance, double savingsBalance, double creditBalance, double isaBalance, double giaBalance, double cryptoBalance, double totalInterest)
-    : totalBalance_(totalBalance), currentBalance_(currentBalance), savingsBalance_(savingsBalance),
+    : date_(date), totalBalance_(totalBalance), currentBalance_(currentBalance), savingsBalance_(savingsBalance),
       creditBalance_(creditBalance), isaBalance_(isaBalance), giaBalance_(giaBalance),
       cryptoBalance_(cryptoBalance), totalInterest_(totalInterest) {}
 
@@ -184,6 +193,8 @@ void FinanceSummary::SaveFinanceSummary() const
     file << dt << "," << totalBalance_ << "," << currentBalance_ << "," << savingsBalance_ << "," << creditBalance_ << "," << isaBalance_ << "," << giaBalance_ << "," << cryptoBalance_ << "," << totalInterest_ << "," << std::endl;
     file.close();
 }
+
+// Saved Data
 SavedData::SavedData()
     : accountList_(LoadAccountsFromCSV()),
       savedSummaryList_(loadFinanceSummaryFromCSV()),
@@ -191,7 +202,6 @@ SavedData::SavedData()
 {
 }
 
-//Saved Data
 std::vector<Account> SavedData::LoadAccountsFromCSV()
 {
     std::vector<Account> accountList;
@@ -271,4 +281,59 @@ std::vector<FinanceSummary> SavedData::loadFinanceSummaryFromCSV()
         }
     }
     return financeSummaryList;
+}
+
+
+std::vector<std::tuple<std::vector<double>, std::vector<double>>> SavedData::getFinanceSummaryPoints()
+{
+    std::vector<std::tuple<std::vector<double>, std::vector<double>>> summaryPoints;
+    std::vector<double> dates;
+    std::vector<double> totalBalances;
+    std::vector<double> currentBalances;
+    std::vector<double> savingsBalances;
+    std::vector<double> creditBalances;
+    std::vector<double> isaBalances;
+    std::vector<double> giaBalances;
+    std::vector<double> cryptoBalances;
+    std::vector<double> totalInterests;
+    int i = 0;
+    for (const auto &summary : savedSummaryList_)
+    {
+        // Convert the date string to char* and store it in the dates vector
+        std::string dateStr = summary.date_;
+        char *date = new char[dateStr.length() + 1];
+        strcpy(date, dateStr.c_str());
+        dates.push_back(i);
+        i++;
+
+        totalBalances.push_back(summary.totalBalance_);
+        currentBalances.push_back(summary.currentBalance_);
+        savingsBalances.push_back(summary.savingsBalance_);
+        creditBalances.push_back(summary.creditBalance_);
+        isaBalances.push_back(summary.isaBalance_);
+        giaBalances.push_back(summary.giaBalance_);
+        cryptoBalances.push_back(summary.cryptoBalance_);
+        totalInterests.push_back(summary.totalInterest_);
+    }
+
+    summaryPoints.emplace_back(dates, totalBalances);
+    summaryPoints.emplace_back(dates, currentBalances);
+    summaryPoints.emplace_back(dates, savingsBalances);
+    summaryPoints.emplace_back(dates, creditBalances);
+    summaryPoints.emplace_back(dates, isaBalances);
+    summaryPoints.emplace_back(dates, giaBalances);
+    summaryPoints.emplace_back(dates, cryptoBalances);
+    summaryPoints.emplace_back(dates, totalInterests);
+
+    return summaryPoints;
+}
+
+void SavedData::UpdateAccountsInCSV(std::vector<Account> accountList)
+{
+    std::ofstream file("accounts.csv");
+    for (const Account &account : accountList)
+    {
+        file << account.name_ << "," << account.bank_ << "," << account.balance() << "," << account.interest() << "," << account.type_ << std::endl;
+    }
+    file.close();
 }
