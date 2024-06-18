@@ -296,7 +296,7 @@ std::vector<std::tuple<std::vector<double>, std::vector<double>>> SavedData::get
     std::vector<double> giaBalances;
     std::vector<double> cryptoBalances;
     std::vector<double> totalInterests;
-    int i = 0;
+    double i = 0;
     for (const auto &summary : savedSummaryList_)
     {
         // Convert the date string to char* and store it in the dates vector

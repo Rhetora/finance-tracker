@@ -440,7 +440,7 @@ void VisualiseFrame::CreatePlot()
     mpWindow *plotWindow = new mpWindow(this, wxID_ANY, wxDefaultPosition, wxSize(800, 600), wxSUNKEN_BORDER);
 
     // Create and add layer for the X and Y axes
-    mpScaleX *xAxis = new mpScaleX(wxT("Date"), mpALIGN_BORDER_BOTTOM, true, mpX_DATETIME);
+    mpScaleX *xAxis = new mpScaleX(wxT("Date"), mpALIGN_BORDER_BOTTOM, true);
     mpScaleY *yAxis = new mpScaleY(wxT("Balance (£)"), mpALIGN_LEFT, true);
     xAxis->SetTicks(false);
     yAxis->SetTicks(false);
@@ -500,7 +500,7 @@ void VisualiseFrame::CreatePlot()
         const auto &point = financeSummaryPoints[i];
 
         // Extract the labels (dates) and values from the tuple
-        const std::vector<double> &labels = {3, 6, 7, 8};
+        const std::vector<double> &labels = std::get<0>(point);
         const std::vector<double> &values = std::get<1>(point);
 
         // Create a new line layer for each finance summary point with the corresponding color and name
@@ -516,19 +516,28 @@ void VisualiseFrame::CreatePlot()
     // Find the minimum and maximum Y values
     double minY = std::numeric_limits<double>::max();
     double maxY = std::numeric_limits<double>::lowest();
+    double minX = std::numeric_limits<double>::max();
+    double maxX = std::numeric_limits<double>::lowest();
 
 
     for (const auto &point : financeSummaryPoints)
     {
+        const std::vector<double> &labels = std::get<0>(point);
+        std::cout << labels[1];
         const std::vector<double> &values = std::get<1>(point);
         for (double value : values)
         {
             minY = std::min(minY, value);
             maxY = std::max(maxY, value);
         }
+        for (double label : labels)
+        {
+            minX = std::min(minX, label);
+            maxX = std::max(maxX, label);
+        }
     }
 
-    plotWindow->Fit(0, 10, minY - 1000, maxY + 1000);
+    plotWindow->Fit(-5, 10, minY - 1000, maxY + 1000);
 
     // Enable auto-scaling for the Y-axis based on the largest value plotted
     yAxis->SetLabelFormat(wxT("£%.2f"));
