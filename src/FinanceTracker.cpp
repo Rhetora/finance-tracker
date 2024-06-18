@@ -537,7 +537,7 @@ void VisualiseFrame::CreatePlot()
         }
     }
 
-    plotWindow->Fit(-5, 10, minY - 1000, maxY + 1000);
+    plotWindow->Fit(minX-1, maxX+1, minY - 1000, maxY + 1000);
 
     // Enable auto-scaling for the Y-axis based on the largest value plotted
     yAxis->SetLabelFormat(wxT("£%.2f"));
